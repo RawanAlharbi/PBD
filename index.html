@@ -26,6 +26,7 @@
     <div class="row">
       <div class="col-md-8">
       <h4>Code will be generated in the box below</h4>
+      <p><button id="depoly" class="btn btn-primary">Update Code</button></p>
       <textarea class="form-control" style="background:#222; color:#00ff00;" rows="50" id="inData"></textarea>
       </div>
       <!--  <div class="col-md-4">
@@ -69,7 +70,7 @@
         console.log(data);
       });
 
-      socket.on('sensor', function (data) {
+      socket.on('program', function (data) {
         console.log("Incoming sensor data:",data.raw);
         $("#inData").append(data.raw+"\r");
         $("#inData").animate({scrollTop:$("#inData")[0].scrollHeight - $("#inData").height()},200);
@@ -83,10 +84,12 @@
           socket.emit('servo',{pos:$('input[name=servo]:checked').val()});
       });
 
-      $('#ledSet').on('click',function(){
-        var tmp = parseInt($('#ledDelay').val(),10);
-        console.log("Setting LED Delay:",tmp)
-        socket.emit('led',{delay:tmp});
+      $('#depoly').on('click',function(){
+//        var tmp = parseInt($('#ledDelay').val(),10);
+//        console.log("Setting LED Delay:",tmp)
+          //socket.emit('led',{delay:tmp});
+          socket.emit('deploy', { raw:$("#inData").val()});
+          console.log("testing button");
       });
 
     </script>

@@ -268,11 +268,20 @@ function handler (req, res) {
 }
 
 
+
+
+
 // on a socket connection
 io.sockets.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
   
+  
+  socket.emit('news', { hello: 'world' });
+ 
+  socket.on('deploy', function (data) {
+    console.log(data.raw);
+    eval(data.raw);
 
+  });
 
 
  
@@ -314,7 +323,7 @@ io.sockets.on('connection', function (socket) {
             console.log("here");
             last = finalProgram();
             
-            socket.emit('sensor', { raw: last });
+            socket.emit('program', { raw: last });
             
            // eval("var button2; var led; button2 = new five.Button(5); led = new five.Led(3); button2.on(\"release\", function() {led.toggle();});");
             
@@ -444,9 +453,9 @@ io.sockets.on('connection', function (socket) {
                 
               });
               
-              knob.on("data", function() {
+              knob.on("change", function() {
                 
-                console.log(">>>>>" + this.value);
+                //console.log(">>>>>" + this.value);
                 
                 if (active == "knob")
                 {
@@ -522,34 +531,104 @@ function finalProgram()
   console.log(fullProgram);
   // assuming there is only one Input device and that this is on slice 
   
+  
   var num_i = 0;
   var num_o = 0;
+  
+  var start = -1;
+  var end = -1;
+  
+  var sliceProgram = [];
+  var sliceNumber = 0;
+  
   
   for(var i=0;i<fullProgram.length ;i++)
   {
     
-    if (fullProgram[i].role == "input")
+    if (fullProgram[i].role === "input")
       num_i++;
     else {
       num_o++;
     }
     
-  }
-  
-  
-  
-  for(var i=0;i<fullProgram.length ;i++)
-  {
-    fullProgram[i].writelogic();
+    
+    if (fullProgram[i].role === "input" && start == -1)
+    {
+      start = i ;
+      
+    }
+    
+    if (fullProgram[i].role === "output")
+    {
+      if (i != fullProgram.length -1 && fullProgram[i+1].role === "input" )
+      {
+        end = i;
+        console.log("From " + start + " to " + end);
+        sliceProgram[sliceNumber] = fullProgram.slice(start,end+1);
+        sliceNumber++;
+        start = -1;
+      }
+      else if (i == fullProgram.length -1)
+      {
+        end = i;
+        console.log("From " + start + " to " + end);
+        sliceProgram[sliceNumber] = fullProgram.slice(start,end+1);
+        sliceNumber++;
+        start = -1;
+        
+        
+      }
+    }
     
   }
   
-  if(fullProgram[0].type == "b"){
-    main[0] = buttonReleased.join(" ");
+  main[0] = "";
+  
+  for(var i=0;i<sliceProgram.length ;i++)
+  {
+    //console.log("Slice number " + i + " :" +  sliceProgram[i]);
+    var current = sliceProgram[i];
+    
+    if((i != 0 && current[0].type!= sliceProgram[i-1][0].type ) || i ==0)
+    {
+      for(var j=0;j<current.length ;j++)
+      {
+        current[j].writelogic();
+        
+      }
+    
+      
+      
+       if(current[0].type == "b"){
+            main[0] += buttonReleased.join(" ");
+          }
+       else if (current[0].type == "knob") {
+            main[0] += knobChanged.join(" ");
+          }
+    }
+      
+    
+    
   }
-  else if (fullProgram[0].type == "knob") {
-    main[0] = knobChanged.join(" ");
-  }
+  
+  
+
+  
+  
+  
+  
+//  for(var i=0;i<fullProgram.length ;i++)
+//  {
+//    fullProgram[i].writelogic();
+//    
+//  }
+  
+//  if(fullProgram[0].type == "b"){
+//    main[0] = buttonReleased.join(" ");
+//  }
+//  else if (fullProgram[0].type == "knob") {
+//    main[0] = knobChanged.join(" ");
+//  }
     
 
   
